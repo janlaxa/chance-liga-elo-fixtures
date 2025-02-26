@@ -42,9 +42,10 @@ def get_fixtures(season, czech_clubs, club_mapping):
     fixtures = []
     for index, row in czech_clubs.iterrows():
         club_id = row["club_id"]
+        tm_id = row["tm_id"]
         tm_name = row["tm_name"]
         club_name = row["club_name"]
-        url = f"https://www.transfermarkt.de/{tm_name}/spielplandatum/verein/{club_id}/plus/0?saison_id=2024&wettbewerb_id=TS1"
+        url = f"https://www.transfermarkt.de/{tm_name}/spielplandatum/verein/{tm_id}/plus/0?saison_id=2024&wettbewerb_id=TS1"
         headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
@@ -82,8 +83,10 @@ def get_fixtures(season, czech_clubs, club_mapping):
     fixtures["event_date"] = pd.to_datetime(fixtures["event_date"].str[4:], format="%d.%m.%y").dt.strftime("%Y-%m-%d")
     fixtures["event_timestamp"] = pd.to_datetime(fixtures["event_date"] + " " + fixtures["event_time"], format="%Y-%m-%d %H:%M")
     tm_to_club = {entry["tm_name"]: entry["club_name"] for entry in club_mapping.values()}
+    tm_to_index = {entry["tm_name"]: index for index, entry in club_mapping.items()}
+    fixtures["home_team_id"] = fixtures["home_team"].map(tm_to_index)
     fixtures["home_team"] = fixtures["home_team"].map(tm_to_club)
+    fixtures["away_team_id"] = fixtures["away_team"].map(tm_to_index)
     fixtures["away_team"] = fixtures["away_team"].map(tm_to_club)
     fixtures["is_planned_tf"] = fixtures["event_timestamp"] > datetime.now()
-
     return fixtures
