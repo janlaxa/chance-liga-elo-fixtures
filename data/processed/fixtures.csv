@@ -125,7 +125,7 @@ FC Baník Ostrava,1. FC Slovácko,2024-12-14,19:00,2024-12-14 19:00:00,5,16,Fals
 FC Slovan Liberec,FC Baník Ostrava,2025-02-01,16:00,2025-02-01 16:00:00,12,5,False
 FC Baník Ostrava,SK Sigma Olomouc,2025-02-09,15:30,2025-02-09 15:30:00,5,14,False
 FC Baník Ostrava,FK Teplice,2025-02-22,16:00,2025-02-22 16:00:00,5,11,False
-SK Dynamo České Budějovice,FC Baník Ostrava,2025-03-01,13:30,2025-03-01 13:30:00,10,5,True
+SK Dynamo České Budějovice,FC Baník Ostrava,2025-03-01,13:30,2025-03-01 13:30:00,10,5,False
 FC Viktoria Plzeň,FC Baník Ostrava,2025-03-16,15:30,2025-03-16 15:30:00,13,5,True
 FC Baník Ostrava,AC Sparta Praha,2025-04-05,16:00,2025-04-05 16:00:00,5,6,True
 FK Dukla Praha,FC Baník Ostrava,2025-04-12,00:00,2025-04-12 00:00:00,15,5,True
@@ -146,7 +146,7 @@ AC Sparta Praha,FK Jablonec,2024-12-15,13:00,2024-12-15 13:00:00,6,7,False
 AC Sparta Praha,FC Hradec Králové,2025-02-09,18:30,2025-02-09 18:30:00,6,8,False
 MFK Karviná,AC Sparta Praha,2025-02-15,19:00,2025-02-15 19:00:00,9,6,False
 AC Sparta Praha,SK Dynamo České Budějovice,2025-02-22,19:00,2025-02-22 19:00:00,6,10,False
-SK Sigma Olomouc,AC Sparta Praha,2025-03-01,16:00,2025-03-01 16:00:00,14,6,True
+SK Sigma Olomouc,AC Sparta Praha,2025-03-01,16:00,2025-03-01 16:00:00,14,6,False
 FC Slovan Liberec,AC Sparta Praha,2025-03-15,19:00,2025-03-15 19:00:00,12,6,True
 AC Sparta Praha,FC Viktoria Plzeň,2025-03-30,18:30,2025-03-30 18:30:00,6,13,True
 FK Jablonec,FC Viktoria Plzeň,2024-08-03,17:00,2024-08-03 17:00:00,7,13,False
@@ -163,7 +163,7 @@ FK Jablonec,FK Dukla Praha,2024-12-07,16:00,2024-12-07 16:00:00,7,15,False
 FK Jablonec,1. FC Slovácko,2025-02-09,13:00,2025-02-09 13:00:00,7,16,False
 SK Dynamo České Budějovice,FK Jablonec,2025-02-15,16:00,2025-02-15 16:00:00,10,7,False
 FK Jablonec,MFK Karviná,2025-02-23,15:30,2025-02-23 15:30:00,7,9,False
-FC Hradec Králové,FK Jablonec,2025-03-01,16:00,2025-03-01 16:00:00,8,7,True
+FC Hradec Králové,FK Jablonec,2025-03-01,16:00,2025-03-01 16:00:00,8,7,False
 FK Jablonec,FC Slovan Liberec,2025-03-08,16:00,2025-03-08 16:00:00,7,12,True
 FK Jablonec,SK Sigma Olomouc,2025-03-29,13:30,2025-03-29 13:30:00,7,14,True
 FK Teplice,FK Jablonec,2025-04-06,13:00,2025-04-06 13:00:00,11,7,True
