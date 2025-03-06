@@ -7,13 +7,13 @@ from data.raw.club_mapping import club_mapping
 def get_elo_diff_bar_chart(filtered_fixtures):
     
     fig_elo_diff = go.Figure()
-
+    club_color = club_mapping[filtered_fixtures["club_id"].max()]["color"]
     # Add bars for ELO difference
     fig_elo_diff.add_trace(go.Bar(
         x=filtered_fixtures["event_timestamp"],  # Convert datetime to timestamp
         y=filtered_fixtures["elo_diff"],
         text=filtered_fixtures["elo_diff"].astype(str),  # Display ELO diff inside the bar
-        marker_color=filtered_fixtures["elo_diff"].apply(lambda x: "green" if x >= 0 else "red"),
+        marker_color=filtered_fixtures["elo_diff"].apply(lambda x: '#AEFF00' if x >= 0 else "lightgrey"),
         name="ELO Difference"
     ))
 
@@ -47,9 +47,9 @@ def get_elo_diff_bar_chart(filtered_fixtures):
     # Update layout
     fig_elo_diff.update_traces(textposition="inside")
     fig_elo_diff.update_layout(
-        title="Future Fixtures - Elo Difference",
-        xaxis_title="Fixture Date",
-        yaxis_title="Elo Difference",
+        #title="Future Fixtures - Elo Difference",
+        #xaxis_title="Fixture Date",
+        #yaxis_title="Elo Difference",
         xaxis=dict(
             tickmode="array",
             tickvals=filtered_fixtures["event_timestamp"],  # Use timestamps
