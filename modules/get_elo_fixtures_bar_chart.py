@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import datetime as dt
 import pandas as pd
+import numpy as np
 from modules.encode_image import encode_image
 from data.raw.club_mapping import club_mapping
 
@@ -30,13 +31,23 @@ def get_elo_fixtures_bar_chart(filtered_fixtures):
     for row in filtered_fixtures.itertuples():
         y_annotation = row.opponent_elo + 100
         y_image = row.opponent_elo + 300
-
+        home_away = 'H' if filtered_fixtures["club_id"].iloc[0] == row.home_team_id else 'A'
+        
         fig_elo_diff.add_annotation(
             x=row.event_timestamp,
             y=y_annotation,
-            text=f"{club_mapping[row.opponent_id]["scoreboard"]}",
+            text=f"{club_mapping[row.opponent_id]["scoreboard"]} ({home_away})",
             showarrow=False,
             font=dict(size=12, color="black")
+        )
+
+        fig_elo_diff.add_annotation(
+            x=row.event_timestamp,
+            y=0,
+            yanchor="bottom",
+            text=f"{np.round((row.home_team_p_win if home_away == 'H' else row.away_team_p_win) * 100, 2)}%",
+            showarrow=False,
+            font=dict(size=12, color="white" if row.elo_diff >=0 else "black")
         )
         
         fig_elo_diff.add_layout_image(
@@ -47,7 +58,7 @@ def get_elo_fixtures_bar_chart(filtered_fixtures):
             xref="x",
             yref="y",
             sizex=1740873600.0,  # Adjust size as needed
-            sizey=300,
+            sizey=250,
             xanchor="center",
             yanchor="middle",
             layer="above"
@@ -70,7 +81,7 @@ def get_elo_fixtures_bar_chart(filtered_fixtures):
     # Update layout
     fig_elo_diff.update_traces(textposition="inside")
     fig_elo_diff.update_layout(
-        #title="Future Fixtures - ELO",
+        title="ELO soupeře a pravděpodobnost výhry",
         #xaxis_title="Fixture Date",
         #yaxis_title="Opponent ELO",
         xaxis=dict(

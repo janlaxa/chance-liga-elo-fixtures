@@ -3,9 +3,13 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from datetime import datetime
+import numpy as np
+
 
 def get_fixtures(season, czech_clubs, club_mapping):
+    home_field_advantage = 50
     fixtures = []
+    club_elo = pd.read_csv("data/processed/club_elo.csv")
     for index, row in czech_clubs.iterrows():
         club_id = row["club_id"]
         tm_id = row["tm_id"]
@@ -55,4 +59,18 @@ def get_fixtures(season, czech_clubs, club_mapping):
     fixtures["away_team_id"] = fixtures["away_team"].map(tm_to_index)
     fixtures["away_team"] = fixtures["away_team"].map(tm_to_club)
     fixtures["is_planned_tf"] = fixtures["event_timestamp"] > datetime.now()
+    fixtures["home_team_elo"] = fixtures["home_team_id"].map(club_elo.set_index("club_id")["elo_rating"]).fillna(0).astype(int)
+    fixtures["away_team_elo"] = fixtures["away_team_id"].map(club_elo.set_index("club_id")["elo_rating"]).fillna(0).astype(int)
+    fixtures["event_date"] = pd.to_datetime(fixtures["event_date"])
+    fixtures["home_team_p_win"] = 1/(1+np.power(10,((fixtures["away_team_elo"] - fixtures["home_team_elo"] + home_field_advantage)/400)))
+    fixtures["home_team_p_loss"] = 1/(1+np.power(10,((fixtures["home_team_elo"] - fixtures["away_team_elo"] + home_field_advantage)/400)))
+    fixtures["home_team_p_draw"] = 1- (fixtures["home_team_p_win"] + fixtures["home_team_p_loss"])
+
+    fixtures["away_team_p_win"] = 1/(1+np.power(10,((fixtures["home_team_elo"] - fixtures["away_team_elo"] + home_field_advantage)/400)))
+    fixtures["away_team_p_loss"] = 1/(1+np.power(10,((fixtures["away_team_elo"] - fixtures["home_team_elo"] + home_field_advantage)/400)))
+    fixtures["away_team_p_draw"] = 1- (fixtures["away_team_p_win"] + fixtures["away_team_p_loss"])
+
+    fixtures["home_team_expected_points"] = (fixtures["home_team_p_win"]*3) + (fixtures["home_team_p_draw"]*1)
+    fixtures["away_team_expected_points"] = (fixtures["away_team_p_win"]*3) + (fixtures["away_team_p_draw"]*1)  
+    
     return fixtures

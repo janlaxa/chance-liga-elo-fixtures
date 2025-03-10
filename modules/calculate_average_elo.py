@@ -8,6 +8,8 @@ def calculate_average_elo(min_matchday, max_matchday):
     club_mapping_df.reset_index(inplace=True)  # Make it a column
     
     league_table = pd.read_csv("data/processed/league_table.csv")
+    home_league_table = pd.read_csv("data/processed/home_league_table.csv")
+    away_league_table = pd.read_csv("data/processed/away_league_table.csv")
     fixtures = pd.read_csv("data/processed/fixtures.csv")
     fixtures = fixtures[
     (fixtures["matchday"] >= min_matchday) & 
@@ -59,6 +61,10 @@ def calculate_average_elo(min_matchday, max_matchday):
     club_average_opponent_elo["tm_id"] = club_average_opponent_elo["club_name"].map(club_mapping_df.set_index("club_name")["tm_id"])
     club_average_opponent_elo["position"] = club_average_opponent_elo["tm_id"].map(league_table.set_index("tm_id")["position"])
     club_average_opponent_elo["points"] = club_average_opponent_elo["tm_id"].map(league_table.set_index("tm_id")["points"]) 
+    club_average_opponent_elo["position_home"] = club_average_opponent_elo["tm_id"].map(home_league_table.set_index("tm_id")["position"])
+    club_average_opponent_elo["points_home"] = club_average_opponent_elo["tm_id"].map(home_league_table.set_index("tm_id")["points"]) 
+    club_average_opponent_elo["position_away"] = club_average_opponent_elo["tm_id"].map(away_league_table.set_index("tm_id")["position"])
+    club_average_opponent_elo["points_away"] = club_average_opponent_elo["tm_id"].map(away_league_table.set_index("tm_id")["points"]) 
     club_average_opponent_elo["club_logo"]  = club_average_opponent_elo["club_name"].map(club_mapping_df.set_index("club_name")["club_logo"])
     club_average_opponent_elo["club_id"] = club_average_opponent_elo["club_name"].map(club_mapping_df.set_index("club_name")["club_id"])
     club_average_opponent_elo = club_average_opponent_elo.sort_values(by="position", ascending=True)

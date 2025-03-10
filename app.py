@@ -15,15 +15,19 @@ from modules.get_scoreboard_name import get_scoreboard_name
 from modules.get_elo_diff_bar_chart import get_elo_diff_bar_chart
 from modules.get_elo_fixtures_bar_chart import get_elo_fixtures_bar_chart
 from modules.calculate_average_elo import calculate_average_elo
+from modules.get_expected_points import get_expected_points
 
 # Page config
 st.set_page_config(page_title="Czech Football Clubs ELO", layout="wide")
 
 fixtures = pd.read_csv("data/processed/fixtures.csv")
 fixtures = fixtures[fixtures["is_planned_tf"]==True]
+fixtures["event_date"] = pd.to_datetime(fixtures["event_date"])
 today = datetime.datetime.today()
 club_elo = pd.read_csv("data/processed/club_elo.csv")
 league_table = pd.read_csv("data/processed/league_table.csv")
+home_league_table = pd.read_csv("data/processed/home_league_table.csv")
+away_league_table = pd.read_csv("data/processed/away_league_table.csv")
 
 # Streamlit filter for matchday range
 min_matchday = int(fixtures["matchday"].min())
@@ -71,18 +75,12 @@ fixtures = fixtures[
     (fixtures["matchday"] >= selected_matchday_range[0]) & 
     (fixtures["matchday"] <= selected_matchday_range[1])
 ]
-fixtures["home_team_elo"] = fixtures["home_team_id"].map(club_elo.set_index("club_id")["elo_rating"]).fillna(0).astype(int)
-fixtures["away_team_elo"] = fixtures["away_team_id"].map(club_elo.set_index("club_id")["elo_rating"]).fillna(0).astype(int)
-fixtures["event_date"] = pd.to_datetime(fixtures["event_date"])
 
 club_average_opponent_elo = calculate_average_elo(selected_matchday_range[0], selected_matchday_range[1]).sort_values(by="position", ascending=True)
 filtered_club_average_opponent_elo = club_average_opponent_elo.sort_values(by="position", ascending=False)
 
-
-
-
 st.title("Chance Liga")
-st.subheader("Kdo má nejtěžší los? (průměrné ELO soupeřů)")
+st.subheader("Kdo má nejtěžší los?")
 
 # Initialize session state for selected club
 if "selected_club_ids" not in st.session_state:
@@ -146,12 +144,39 @@ with st.sidebar:
                     st.session_state["selected_club_ids"].append(club_id)
                 else:
                     st.error("Maximální počet klubů pro srovnání dosažen")
+    
+if st.session_state["selected_club_ids"]:
+    if st.button("Reset filtru", key="clear_filter"):
+        st.session_state.pop("selected_club_ids", None)
+        if "selected_club_ids" not in st.session_state:
+            st.session_state["selected_club_ids"] = []
+
 
 # Show selected clubs
 if st.session_state["selected_club_ids"]:
     selected_club_names = [club_mapping[club_id]["club_name"] for club_id in st.session_state["selected_club_ids"]]
     filtered_club_average_opponent_elo = club_average_opponent_elo[club_average_opponent_elo["club_name"].isin(selected_club_names)].sort_values(by='position', ascending=False)
-    st.success(f"Showing fixtures for: {', '.join(selected_club_names)}")
+    st.success(f"Vyfiltrované kluby: {', '.join(selected_club_names)}")
+
+expected_points = get_expected_points(fixtures)
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.merge(expected_points, on='club_id', how='left')
+filtered_club_average_opponent_elo["total_points"] = np.round(filtered_club_average_opponent_elo["points"] + filtered_club_average_opponent_elo["total_expected_points"])
+filtered_club_average_opponent_elo["total_home_points"] = np.round(filtered_club_average_opponent_elo["points_home"] + filtered_club_average_opponent_elo["home_team_expected_points"])
+filtered_club_average_opponent_elo["total_away_points"] = np.round(filtered_club_average_opponent_elo["points_away"] + filtered_club_average_opponent_elo["away_team_expected_points"])
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="total_points", ascending=False).reset_index(drop=True)
+filtered_club_average_opponent_elo["expected_position"] = filtered_club_average_opponent_elo.index + 1
+filtered_club_average_opponent_elo["position_diff"] = filtered_club_average_opponent_elo["position"] - filtered_club_average_opponent_elo["expected_position"]
+filtered_club_average_opponent_elo["position_diff_str"] = filtered_club_average_opponent_elo["position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="total_home_points", ascending=False).reset_index(drop=True)
+filtered_club_average_opponent_elo["expected_position_home"] = filtered_club_average_opponent_elo.index + 1
+filtered_club_average_opponent_elo["home_position_diff"] = filtered_club_average_opponent_elo["position_home"] - filtered_club_average_opponent_elo["expected_position_home"]
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="total_away_points", ascending=False).reset_index(drop=True)
+filtered_club_average_opponent_elo["expected_position_away"] = filtered_club_average_opponent_elo.index + 1
+filtered_club_average_opponent_elo["away_position_diff"] = filtered_club_average_opponent_elo["position_away"] - filtered_club_average_opponent_elo["expected_position_away"]
+
 
 cols = st.columns(max(1, len(st.session_state["selected_club_ids"])), gap="medium")
 
@@ -165,7 +190,7 @@ for idx, club_id in enumerate(st.session_state["selected_club_ids"]):
     filtered_fixtures["club_id"] = club_id
     filtered_fixtures["club_elo"] = np.where(filtered_fixtures["home_team_id"] == club_id, filtered_fixtures["home_team_elo"], filtered_fixtures["away_team_elo"])
     filtered_fixtures["elo_diff"] = np.where(filtered_fixtures["home_team_id"] == club_id, filtered_fixtures["home_team_elo"] - filtered_fixtures["away_team_elo"], filtered_fixtures["away_team_elo"] - filtered_fixtures["home_team_elo"])
-    filtered_fixtures = filtered_fixtures[filtered_fixtures["event_date"] >= today]
+    filtered_fixtures = filtered_fixtures[pd.to_datetime(filtered_fixtures["event_date"]) >= today]
     filtered_fixtures["opponent"] = filtered_fixtures.apply(
         lambda row: row["home_team"] if row["home_away"] == "Away" else row["away_team"], axis=1
     )
@@ -177,14 +202,16 @@ for idx, club_id in enumerate(st.session_state["selected_club_ids"]):
     )
     # Convert event_date to Unix timestamp
     filtered_fixtures["event_timestamp"] = filtered_fixtures["event_date"].apply(lambda x: x.timestamp())
-
    
-    fixtures_table = filtered_fixtures[["matchday", "event_timestamp", "home_team", "away_team"]]
+    fixtures_table = filtered_fixtures[["matchday", "event_timestamp", "home_team","away_team","home_team_elo","away_team_elo"]]
+    fixtures_table['home_team_elo'] = fixtures_table['home_team_elo'].astype(int).apply(lambda x: f"{x:,}".replace(",", ""))
+    fixtures_table['away_team_elo'] = fixtures_table['away_team_elo'].astype(int).apply(lambda x: f"{x:,}".replace(",", ""))
+
     fixtures_table["event_timestamp"] = filtered_fixtures.apply(
         lambda row: datetime.datetime.fromtimestamp(row["event_timestamp"]).strftime('%Y-%m-%d') + ' ' + row["event_time"], axis=1
     )
-    fixtures_table.columns = ['MD','Datum','D','V']
-    fixtures_table = fixtures_table.set_index("MD")
+    fixtures_table.columns = ['Matchday','Datum','Domácí','Hosté','ELO Domácí', 'ELO Hosté']
+    fixtures_table = fixtures_table.set_index("Matchday")
 
     fig_elo_diff = get_elo_diff_bar_chart(filtered_fixtures)
     fig_elo = get_elo_fixtures_bar_chart(filtered_fixtures)
@@ -192,11 +219,274 @@ for idx, club_id in enumerate(st.session_state["selected_club_ids"]):
     with cols[idx]:
         st.image(club_mapping[club_id]['club_logo'], width=50, output_format="auto")
         st.header(f"{club_mapping[club_id]['club_name']}")
+        st.subheader(f'Očekávané body: {expected_points[expected_points["club_id"]==club_id]["total_expected_points"].iloc[0].astype(int)}')
         st.plotly_chart(fig_elo)
         st.plotly_chart(fig_elo_diff)
-        st.dataframe(fixtures_table)
+        st.dataframe(fixtures_table, use_container_width=True)
 
 st.divider()
+
+st.markdown("### Očekávaný počet bodů")
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="expected_position", ascending=False)
+# Create figure
+fig_ep = go.Figure()
+
+# Add the club's own ELO rating (wider, gray bars)
+fig_ep.add_trace(go.Bar(
+    y=filtered_club_average_opponent_elo["club_name"],
+    x=filtered_club_average_opponent_elo["total_points"],
+    name="Celkem",
+    orientation='h',
+    marker=dict(color='#AEFF00'),
+    width=0.9,
+    text=np.round(filtered_club_average_opponent_elo["total_points"]),
+    textfont=dict(color='grey', size=10),
+    textposition='outside',
+    textangle=0  # Rotate text to be vertical
+))
+
+# Add the average opponent ELO (thinner, colored bars)
+fig_ep.add_trace(go.Bar(
+    y=filtered_club_average_opponent_elo["club_name"],
+    x=filtered_club_average_opponent_elo["points"],
+    name="Aktuální body",
+    orientation='h',
+    marker=dict(color='#111A67'),
+    width=0.9,
+    text=filtered_club_average_opponent_elo["points"],
+    textfont=dict(color='white', size=10),
+    textposition='inside',
+    textangle=0  # Rotate text to be vertical
+))
+
+# Add club logos
+for idx, row in filtered_club_average_opponent_elo.iterrows():
+    club_info = next((item for item in club_mapping.values() if item["club_name"] == row["club_name"]), None)
+    if club_info:
+        fig_ep.add_layout_image(
+            dict(
+                source=Image.open(club_info["club_logo"]),
+                xref="paper", yref="y",
+                x=-0.01, y=row["club_name"],
+                sizex=0.05, sizey=0.9,
+                xanchor="right", yanchor="middle"
+            )
+        )
+        fig_ep.add_annotation(
+            x=row["points"] + row["total_expected_points"]/2,
+            y=row["club_name"],
+            text=f"+{np.round(row["total_expected_points"]).astype(int)}",
+            showarrow=False,
+            font=dict(size=10, color="green")
+        )
+
+# Layout adjustments
+fig_ep.update_layout(
+    barmode='overlay',  # Overlapping bars
+    yaxis=dict(
+        tickmode='array',
+        tickvals=filtered_club_average_opponent_elo["club_name"],
+        ticktext=filtered_club_average_opponent_elo["position_diff_str"] + filtered_club_average_opponent_elo["expected_position"].astype(str) + ". " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
+        tickfont=dict(size=10),
+        tickangle=0,
+        automargin=True,
+        ticklabelposition="outside",
+        ticklen=25,
+        tickcolor='rgba(0,0,0,0)',
+    ),
+    xaxis=dict(
+        #type = 'log',
+        showgrid=False,
+        gridcolor='rgba(0,0,0,0.3)',  # Slightly visible vertical grid lines
+        gridwidth=1,
+        griddash='dot' # Dashed grid lines
+    ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.25,
+        xanchor="center",
+        x=0.5,
+        traceorder="reversed"  # Reverse the legend order
+    ),
+    margin=dict(l=10, r=10, t=20, b=100),  # Adjust margins as needed
+)
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by='expected_position_home',ascending=False)
+
+# Create figure
+fig_ep_home = go.Figure()
+
+# Add the club's own ELO rating (wider, gray bars)
+fig_ep_home.add_trace(go.Bar(
+    y=filtered_club_average_opponent_elo["club_name"],
+    x=filtered_club_average_opponent_elo["total_home_points"],
+    name="Očekávané body doma",
+    orientation='h',
+    marker=dict(color='rgba(0,0,0,0.15)'),
+    width=0.9,
+    text=np.round(filtered_club_average_opponent_elo["total_home_points"]),
+    textfont=dict(color='grey', size=10),
+    textposition='outside',
+    textangle=0
+))
+
+# Add the average opponent ELO (thinner, colored bars)
+fig_ep_home.add_trace(go.Bar(
+    y=filtered_club_average_opponent_elo["club_name"],
+    x=filtered_club_average_opponent_elo["points_home"],
+    name="Aktulání body doma",
+    orientation='h',
+    marker=dict(color='#585e94'),
+    width=0.9,
+    text=filtered_club_average_opponent_elo["points_home"],
+    textfont=dict(color='white', size=10),
+    textposition='inside',
+    textangle=0
+))
+
+# Add club logos
+for idx, row in filtered_club_average_opponent_elo.iterrows():
+    club_info = next((item for item in club_mapping.values() if item["club_name"] == row["club_name"]), None)
+    if club_info:
+        fig_ep_home.add_layout_image(
+            dict(
+                source=Image.open(club_info["club_logo"]),
+                xref="paper", yref="y",
+                x=-0.01, y=row["club_name"],
+                sizex=0.05, sizey=0.9,
+                xanchor="right", yanchor="middle"
+            )
+        )
+        fig_ep_home.add_annotation(
+            x=row["points_home"] + row["home_team_expected_points"]/2,
+            y=row["club_name"],
+            text=f"+{np.round(row["home_team_expected_points"]).astype(int)}",
+            showarrow=False,
+            font=dict(size=10, color="grey")
+        )
+
+# Layout adjustments
+fig_ep_home.update_layout(
+    barmode='overlay',  # Overlapping bars
+    yaxis=dict(
+        tickmode='array',
+        tickvals=filtered_club_average_opponent_elo["club_name"],
+        ticktext="(" + filtered_club_average_opponent_elo["position_home"].astype(str) + ". -> " + filtered_club_average_opponent_elo["expected_position_home"].astype(str) + ".) " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
+        tickfont=dict(size=10),
+        tickangle=0,
+        automargin=True,
+        ticklabelposition="outside",
+        ticklen=25,
+        tickcolor='rgba(0,0,0,0)',
+    ),
+    xaxis=dict(
+        #type = 'log',
+        showgrid=False,
+        gridcolor='rgba(0,0,0,0.3)',  # Slightly visible vertical grid lines
+        gridwidth=1,
+        griddash='dot' # Dashed grid lines
+    ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.25,
+        xanchor="center",
+        x=0.5,
+        traceorder="reversed"  # Reverse the legend order
+    ),
+    margin=dict(l=10, r=10, t=20, b=100),  # Adjust margins as needed
+)
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by='expected_position_away',ascending=False)
+
+# Create figure
+fig_ep_away = go.Figure()
+
+# Add the club's own ELO rating (wider, gray bars)
+fig_ep_away.add_trace(go.Bar(
+    y=filtered_club_average_opponent_elo["club_name"],
+    x=filtered_club_average_opponent_elo["total_away_points"],
+    name="Očekávané body venku",
+    orientation='h',
+    marker=dict(color='rgba(0,0,0,0.15)'),
+    width=0.9,
+    text=np.round(filtered_club_average_opponent_elo["total_away_points"]),
+    textfont=dict(color='grey', size=10),
+    textposition='outside',
+    textangle=0
+))
+
+# Add the average opponent ELO (thinner, colored bars)
+fig_ep_away.add_trace(go.Bar(
+    y=filtered_club_average_opponent_elo["club_name"],
+    x=filtered_club_average_opponent_elo["points_away"],
+    name="Aktulání body venku",
+    orientation='h',
+    marker=dict(color='#9fa3c2'),
+    width=0.9,
+    text=filtered_club_average_opponent_elo["points_away"],
+    textfont=dict(color='white', size=10),
+    textposition='inside',
+    textangle=0
+))
+
+# Add club logos
+for idx, row in filtered_club_average_opponent_elo.iterrows():
+    club_info = next((item for item in club_mapping.values() if item["club_name"] == row["club_name"]), None)
+    if club_info:
+        fig_ep_away.add_layout_image(
+            dict(
+                source=Image.open(club_info["club_logo"]),
+                xref="paper", yref="y",
+                x=-0.01, y=row["club_name"],
+                sizex=0.05, sizey=0.9,
+                xanchor="right", yanchor="middle"
+            )
+        )
+        fig_ep_away.add_annotation(
+            x=row["points_away"] + row["away_team_expected_points"]/2,
+            y=row["club_name"],
+            text=f"+{np.round(row["away_team_expected_points"]).astype(int)}",
+            showarrow=False,
+            font=dict(size=10, color="grey")
+        )
+
+# Layout adjustments
+fig_ep_away.update_layout(
+    barmode='overlay',  # Overlapping bars
+    yaxis=dict(
+        tickmode='array',
+        tickvals=filtered_club_average_opponent_elo["club_name"],
+        ticktext="(" + filtered_club_average_opponent_elo["position_away"].astype(str) + ". -> " + filtered_club_average_opponent_elo["expected_position_away"].astype(str) + ".) " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
+        tickfont=dict(size=10),
+        tickangle=0,
+        automargin=True,
+        ticklabelposition="outside",
+        ticklen=25,
+        tickcolor='rgba(0,0,0,0)',
+    ),
+    xaxis=dict(
+        #type = 'log',
+        showgrid=False,
+        gridcolor='rgba(0,0,0,0.3)',  # Slightly visible vertical grid lines
+        gridwidth=1,
+        griddash='dot' # Dashed grid lines
+    ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.25,
+        xanchor="center",
+        x=0.5,
+        traceorder="reversed"  # Reverse the legend order
+    ),
+    margin=dict(l=10, r=10, t=20, b=100),  # Adjust margins as needed
+)
+
+filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="position", ascending=False)
+
 # Create figure
 fig1 = go.Figure()
 
@@ -229,11 +519,11 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig1.add_layout_image(
             dict(
-            source=Image.open(club_info["club_logo"]),
-            xref="paper", yref="y",
-            x=0, y=row["club_name"],
-            sizex=0.05, sizey=0.9,
-            xanchor="right", yanchor="middle"
+                source=Image.open(club_info["club_logo"]),
+                xref="paper", yref="y",
+                x=-0.01, y=row["club_name"],
+                sizex=0.05, sizey=0.9,
+                xanchor="right", yanchor="middle"
             )
         )
 
@@ -248,7 +538,7 @@ fig1.update_layout(
         tickangle=0,
         automargin=True,
         ticklabelposition="outside",
-        ticklen=20,
+        ticklen=25,
         tickcolor='rgba(0,0,0,0)',
     ),
     xaxis=dict(
@@ -263,7 +553,8 @@ fig1.update_layout(
         yanchor="bottom",
         y=-0.25,
         xanchor="center",
-        x=0.5
+        x=0.5,
+        traceorder="reversed"  # Reverse the legend order
     ),
     margin=dict(l=100, r=20, t=20, b=100),  # Adjust margins as needed
 )
@@ -302,7 +593,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
             dict(
                 source=Image.open(club_info["club_logo"]),
                 xref="paper", yref="y",
-                x=0, y=row["club_name"],
+                x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,
                 xanchor="right", yanchor="middle"
             )
@@ -319,7 +610,7 @@ fig2.update_layout(
         tickangle=0,
         automargin=True,
         ticklabelposition="outside",
-        ticklen=20,
+        ticklen=25,
         tickcolor='rgba(0,0,0,0)',
     ),
     xaxis=dict(
@@ -334,7 +625,8 @@ fig2.update_layout(
         yanchor="bottom",
         y=-0.25,
         xanchor="center",
-        x=0.5
+        x=0.5,
+        traceorder="reversed"
     ),
     margin=dict(l=100, r=20, t=20, b=100)  # Adjust margins as needed
 )
@@ -374,7 +666,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
             dict(
                 source=Image.open(club_info["club_logo"]),
                 xref="paper", yref="y",
-                x=0, y=row["club_name"],
+                x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,
                 xanchor="right", yanchor="middle"
             )
@@ -391,7 +683,7 @@ fig3.update_layout(
         tickangle=0,
         automargin=True,
         ticklabelposition="outside",
-        ticklen=20,
+        ticklen=25,
         tickcolor='rgba(0,0,0,0)',
     ),
     xaxis=dict(
@@ -406,11 +698,25 @@ fig3.update_layout(
         yanchor="bottom",
         y=-0.25,
         xanchor="center",
-        x=0.5
+        x=0.5,
+        traceorder="reversed"
     ),
     margin=dict(l=100, r=20, t=20, b=100)  # Adjust margins as needed
 )
 
+cols = st.columns(3, gap="small")
+with cols[0]:
+    st.markdown('##### Celkem')
+    st.plotly_chart(fig_ep, use_container_width=True, height = 1000)
+with cols[1]:
+    st.markdown('##### Domácí zápasy')
+    st.plotly_chart(fig_ep_home, use_container_width=True, height = 1000)
+with cols[2]:
+    st.markdown('##### Venkovní zápasy')
+    st.plotly_chart(fig_ep_away, use_container_width=True, height = 1000)
+
+st.divider()
+st.markdown("### Průměrné ELO soupeře")
 cols = st.columns(3, gap="small")
 with cols[0]:
     st.markdown('##### Celkem')
@@ -421,3 +727,4 @@ with cols[1]:
 with cols[2]:
     st.markdown('##### Venkovní zápasy')
     st.plotly_chart(fig3, use_container_width=True, height = 1000)
+

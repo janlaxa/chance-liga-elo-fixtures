@@ -13,18 +13,19 @@ def get_elo_diff_bar_chart(filtered_fixtures):
         x=filtered_fixtures["event_timestamp"],  # Convert datetime to timestamp
         y=filtered_fixtures["elo_diff"],
         text=filtered_fixtures["elo_diff"].astype(str),  # Display ELO diff inside the bar
-        marker_color=filtered_fixtures["elo_diff"].apply(lambda x: '#AEFF00' if x >= 0 else "lightgrey"),
+        marker_color=filtered_fixtures["elo_diff"].apply(lambda x: club_color if x >= 0 else "lightgrey"),
         name="ELO Difference"
     ))
 
     # Add Opponent ELO as annotations above the bars
     for row in filtered_fixtures.itertuples():
-        y_annotation = row.elo_diff - 30 if row.elo_diff <= 0 else row.elo_diff + 30
-        y_image = row.elo_diff - 100 if row.elo_diff <= 0 else row.elo_diff + 100
+        y_annotation = row.elo_diff - 40 if row.elo_diff <= 0 else row.elo_diff + 40
+        y_image = row.elo_diff - 150 if row.elo_diff <= 0 else row.elo_diff + 150
+        home_away = 'H' if filtered_fixtures["club_id"].iloc[0] == row.home_team_id else 'A'
         fig_elo_diff.add_annotation(
             x=row.event_timestamp,
             y=y_annotation,
-            text=f"{club_mapping[row.opponent_id]["scoreboard"]}",
+            text=f"{club_mapping[row.opponent_id]["scoreboard"]} ({home_away})",
             showarrow=False,
             font=dict(size=12, color="black")
         )
@@ -37,7 +38,7 @@ def get_elo_diff_bar_chart(filtered_fixtures):
             xref="x",
             yref="y",
             sizex=1740873600.0,  # Adjust size as needed
-            sizey=100,
+            sizey=120,
             xanchor="center",
             yanchor="middle",
             layer="above"
@@ -47,7 +48,7 @@ def get_elo_diff_bar_chart(filtered_fixtures):
     # Update layout
     fig_elo_diff.update_traces(textposition="inside")
     fig_elo_diff.update_layout(
-        #title="Future Fixtures - Elo Difference",
+        title="Meziklubový ELO rozdíl",
         #xaxis_title="Fixture Date",
         #yaxis_title="Elo Difference",
         xaxis=dict(
@@ -57,7 +58,7 @@ def get_elo_diff_bar_chart(filtered_fixtures):
             type="linear"  # Ensure it's treated as a continuous scale
         ),
         yaxis=dict(
-            range=[filtered_fixtures["elo_diff"].min() - 200, filtered_fixtures["elo_diff"].max() + 200]
+            range=[-650,650]#[filtered_fixtures["elo_diff"].min() - 200, filtered_fixtures["elo_diff"].max() + 200]
         )
     )
     return fig_elo_diff

@@ -8,6 +8,8 @@ from io import StringIO
 from modules.get_elo_data import get_elo_data
 from modules.get_fixtures import get_fixtures
 from modules.get_league_table import get_league_table
+from modules.get_league_table import get_home_league_table
+from modules.get_league_table import get_away_league_table
 from data.raw.club_mapping import club_mapping
 
 czech_clubs = pd.DataFrame.from_dict(club_mapping, orient="index").reset_index().rename(columns={"index": "club_id"})
@@ -17,6 +19,13 @@ fixtures.to_csv("data/processed/fixtures.csv", index=False)
 
 league_table = get_league_table(2024, club_mapping)
 league_table.to_csv("data/processed/league_table.csv", index=False)
+
+
+home_league_table = get_home_league_table(2024, club_mapping)
+home_league_table = pd.read_csv("data/processed/home_league_table.csv")
+
+away_league_table = get_away_league_table(2024, club_mapping)
+away_league_table = pd.read_csv("data/processed/away_league_table.csv")
 
 # Create a list to store club data
 df_club_elo = []
