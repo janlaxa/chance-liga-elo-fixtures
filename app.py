@@ -77,7 +77,29 @@ fixtures = fixtures[
 ]
 
 club_average_opponent_elo = calculate_average_elo(selected_matchday_range[0], selected_matchday_range[1]).sort_values(by="position", ascending=True)
-filtered_club_average_opponent_elo = club_average_opponent_elo.sort_values(by="position", ascending=False)
+
+
+expected_points = get_expected_points(fixtures)
+
+club_average_opponent_elo = club_average_opponent_elo.merge(expected_points, on='club_id', how='left')
+club_average_opponent_elo["total_points"] = np.round(club_average_opponent_elo["points"] + club_average_opponent_elo["total_expected_points"])
+club_average_opponent_elo["total_home_points"] = np.round(club_average_opponent_elo["points_home"] + club_average_opponent_elo["home_team_expected_points"])
+club_average_opponent_elo["total_away_points"] = np.round(club_average_opponent_elo["points_away"] + club_average_opponent_elo["away_team_expected_points"])
+club_average_opponent_elo = club_average_opponent_elo.sort_values(by="total_points", ascending=False).reset_index(drop=True)
+club_average_opponent_elo["expected_position"] = club_average_opponent_elo.index + 1
+club_average_opponent_elo["position_diff"] = club_average_opponent_elo["position"] - club_average_opponent_elo["expected_position"]
+club_average_opponent_elo["position_diff_str"] = club_average_opponent_elo["position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+
+club_average_opponent_elo = club_average_opponent_elo.sort_values(by="total_home_points", ascending=False).reset_index(drop=True)
+club_average_opponent_elo["expected_position_home"] = club_average_opponent_elo.index + 1
+club_average_opponent_elo["home_position_diff"] = club_average_opponent_elo["position_home"] - club_average_opponent_elo["expected_position_home"]
+club_average_opponent_elo["home_position_diff_str"] = club_average_opponent_elo["home_position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+
+club_average_opponent_elo = club_average_opponent_elo.sort_values(by="total_away_points", ascending=False).reset_index(drop=True)
+club_average_opponent_elo["expected_position_away"] = club_average_opponent_elo.index + 1
+club_average_opponent_elo["away_position_diff"] = club_average_opponent_elo["position_away"] - club_average_opponent_elo["expected_position_away"]
+club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo["away_position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+
 
 st.title("Chance Liga")
 st.subheader("Kdo má nejtěžší los?")
@@ -151,31 +173,14 @@ if st.session_state["selected_club_ids"]:
         if "selected_club_ids" not in st.session_state:
             st.session_state["selected_club_ids"] = []
 
+filtered_club_average_opponent_elo = club_average_opponent_elo.sort_values(by="position", ascending=False)
+
 
 # Show selected clubs
 if st.session_state["selected_club_ids"]:
     selected_club_names = [club_mapping[club_id]["club_name"] for club_id in st.session_state["selected_club_ids"]]
     filtered_club_average_opponent_elo = club_average_opponent_elo[club_average_opponent_elo["club_name"].isin(selected_club_names)].sort_values(by='position', ascending=False)
     st.success(f"Vyfiltrované kluby: {', '.join(selected_club_names)}")
-
-expected_points = get_expected_points(fixtures)
-
-filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.merge(expected_points, on='club_id', how='left')
-filtered_club_average_opponent_elo["total_points"] = np.round(filtered_club_average_opponent_elo["points"] + filtered_club_average_opponent_elo["total_expected_points"])
-filtered_club_average_opponent_elo["total_home_points"] = np.round(filtered_club_average_opponent_elo["points_home"] + filtered_club_average_opponent_elo["home_team_expected_points"])
-filtered_club_average_opponent_elo["total_away_points"] = np.round(filtered_club_average_opponent_elo["points_away"] + filtered_club_average_opponent_elo["away_team_expected_points"])
-filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="total_points", ascending=False).reset_index(drop=True)
-filtered_club_average_opponent_elo["expected_position"] = filtered_club_average_opponent_elo.index + 1
-filtered_club_average_opponent_elo["position_diff"] = filtered_club_average_opponent_elo["position"] - filtered_club_average_opponent_elo["expected_position"]
-filtered_club_average_opponent_elo["position_diff_str"] = filtered_club_average_opponent_elo["position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
-
-filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="total_home_points", ascending=False).reset_index(drop=True)
-filtered_club_average_opponent_elo["expected_position_home"] = filtered_club_average_opponent_elo.index + 1
-filtered_club_average_opponent_elo["home_position_diff"] = filtered_club_average_opponent_elo["position_home"] - filtered_club_average_opponent_elo["expected_position_home"]
-
-filtered_club_average_opponent_elo = filtered_club_average_opponent_elo.sort_values(by="total_away_points", ascending=False).reset_index(drop=True)
-filtered_club_average_opponent_elo["expected_position_away"] = filtered_club_average_opponent_elo.index + 1
-filtered_club_average_opponent_elo["away_position_diff"] = filtered_club_average_opponent_elo["position_away"] - filtered_club_average_opponent_elo["expected_position_away"]
 
 
 cols = st.columns(max(1, len(st.session_state["selected_club_ids"])), gap="medium")
@@ -219,7 +224,7 @@ for idx, club_id in enumerate(st.session_state["selected_club_ids"]):
     with cols[idx]:
         st.image(club_mapping[club_id]['club_logo'], width=50, output_format="auto")
         st.header(f"{club_mapping[club_id]['club_name']}")
-        st.subheader(f'Očekávané body: {expected_points[expected_points["club_id"]==club_id]["total_expected_points"].iloc[0].astype(int)}')
+        st.subheader(f'Očekávané body: {np.round(expected_points[expected_points["club_id"]==club_id]["total_expected_points"].iloc[0]).astype(int)}')
         st.plotly_chart(fig_elo)
         st.plotly_chart(fig_elo_diff)
         st.dataframe(fixtures_table, use_container_width=True)
@@ -373,7 +378,7 @@ fig_ep_home.update_layout(
     yaxis=dict(
         tickmode='array',
         tickvals=filtered_club_average_opponent_elo["club_name"],
-        ticktext="(" + filtered_club_average_opponent_elo["position_home"].astype(str) + ". -> " + filtered_club_average_opponent_elo["expected_position_home"].astype(str) + ".) " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
+        ticktext=filtered_club_average_opponent_elo["home_position_diff_str"] + filtered_club_average_opponent_elo["expected_position_home"].astype(str) + ". " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
         tickfont=dict(size=10),
         tickangle=0,
         automargin=True,
@@ -459,7 +464,7 @@ fig_ep_away.update_layout(
     yaxis=dict(
         tickmode='array',
         tickvals=filtered_club_average_opponent_elo["club_name"],
-        ticktext="(" + filtered_club_average_opponent_elo["position_away"].astype(str) + ". -> " + filtered_club_average_opponent_elo["expected_position_away"].astype(str) + ".) " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
+        ticktext=filtered_club_average_opponent_elo["away_position_diff_str"] + filtered_club_average_opponent_elo["expected_position_away"].astype(str) + ". " + filtered_club_average_opponent_elo["scoreboard"].astype(str),
         tickfont=dict(size=10),
         tickangle=0,
         automargin=True,
