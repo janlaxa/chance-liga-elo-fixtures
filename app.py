@@ -7,8 +7,12 @@ import os
 import plotly.graph_objects as go
 import plotly.express as px
 import base64
+import schedule
+import time
+import threading
 from io import BytesIO
 from PIL import Image
+
 
 from data.raw.club_mapping import club_mapping
 from modules.get_scoreboard_name import get_scoreboard_name
@@ -19,6 +23,27 @@ from modules.get_expected_points import get_expected_points
 
 # Page config
 st.set_page_config(page_title="Czech Football Clubs ELO", layout="wide")
+
+def run_script():
+    """Runs the data processing script at the scheduled time."""
+    st.write("Stahování posledních výsledků...")
+    exec(open("scripts/data_processing.py").read())  # Executes the script
+
+def schedule_task():
+    """Runs the scheduler in the background without blocking Streamlit."""
+    while True:
+        schedule.run_pending()
+        time.sleep(1)  # Check every 60 seconds
+
+@st.cache_resource
+def start_scheduler():
+    """Ensures the scheduler runs only once per session."""
+    schedule.every().day.at("07:14").do(run_script)  # Runs at 08:00 AM UTC
+    thread = threading.Thread(target=schedule_task, daemon=True)
+    thread.start()
+
+# Start the scheduler (runs in the background)
+start_scheduler()
 
 fixtures = pd.read_csv("data/processed/fixtures.csv")
 fixtures = fixtures[fixtures["is_planned_tf"]==True]
