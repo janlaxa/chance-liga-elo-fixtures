@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 import sys
 
-def get_league_table(season, club_mapping):
+def get_league_table(season):
     url = f'https://www.transfermarkt.com/fortuna-liga/tabelle/wettbewerb/TS1/saison_id/{season}'
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)
@@ -51,7 +51,7 @@ def get_league_table(season, club_mapping):
 
     # Extract the club names and URLs
 
-def get_home_league_table(season, club_mapping):
+def get_home_league_table(season):
     url = f'https://www.transfermarkt.com/fortuna-liga/heimtabelle/wettbewerb/TS1/saison_id/{season}'
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)
@@ -95,7 +95,7 @@ def get_home_league_table(season, club_mapping):
     df_indices
     return df_indices
 
-def get_away_league_table(season, club_mapping):
+def get_away_league_table(season):
     url = f'https://www.transfermarkt.com/fortuna-liga/gasttabelle/wettbewerb/TS1/saison_id/{season}'
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers)

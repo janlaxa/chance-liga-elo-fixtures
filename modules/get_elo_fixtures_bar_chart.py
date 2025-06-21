@@ -5,8 +5,8 @@ import pandas as pd
 import numpy as np
 from modules.encode_image import encode_image
 from data.raw.club_mapping import club_mapping
-
-def get_elo_fixtures_bar_chart(filtered_fixtures):
+import os
+def get_elo_fixtures_bar_chart(filtered_fixtures, PROJECT_ROOT=None):
 
     club_name = club_mapping[filtered_fixtures["club_id"].iloc[0]]["club_name"]
     club_color = club_mapping[filtered_fixtures["club_id"].iloc[0]]["color"]
@@ -36,7 +36,7 @@ def get_elo_fixtures_bar_chart(filtered_fixtures):
         fig_elo_diff.add_annotation(
             x=row.event_timestamp,
             y=y_annotation,
-            text=f"{club_mapping[row.opponent_id]["scoreboard"]} ({home_away})",
+            text=f"{club_mapping[row.opponent_id]['scoreboard']} ({home_away})" if pd.notna(row.opponent_id) and row.opponent_id in club_mapping else f"Unknown ({home_away})",
             showarrow=False,
             font=dict(size=12, color="black")
         )
@@ -50,20 +50,21 @@ def get_elo_fixtures_bar_chart(filtered_fixtures):
             font=dict(size=12, color="white" if row.elo_diff >=0 else "black")
         )
         
-        fig_elo_diff.add_layout_image(
-            dict(
-            source=encode_image(club_mapping[row.opponent_id]["club_logo"]),
-            x=int(row.event_timestamp),  # Convert datetime to Unix timestamp
-            y=y_image,  # Adjust y position as needed
-            xref="x",
-            yref="y",
-            sizex=1740873600.0,  # Adjust size as needed
-            sizey=250,
-            xanchor="center",
-            yanchor="middle",
-            layer="above"
+        if pd.notna(row.opponent_id) and row.opponent_id in club_mapping:
+            fig_elo_diff.add_layout_image(
+                dict(
+                source=encode_image(os.path.join(PROJECT_ROOT, club_mapping[row.opponent_id]["club_logo"])),
+                x=int(row.event_timestamp),  # Convert datetime to Unix timestamp
+                y=y_image,  # Adjust y position as needed
+                xref="x",
+                yref="y",
+                sizex=1740873600.0,  # Adjust size as needed
+                sizey=250,
+                xanchor="center",
+                yanchor="middle",
+                layer="above"
+                )
             )
-        )
 
     
 

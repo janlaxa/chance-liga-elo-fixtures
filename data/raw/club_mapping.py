@@ -8,7 +8,7 @@ club_mapping = {
     7: {"scoreboard":"FKJ","tm_id":1322,  "tm_name": "fk-jablonec", "elo_api_name": "Jablonec", "club_name": "FK Jablonec",       "club_logo": "assets/logos/logo_fkj.png", "color":'#00884B'},
     8: {"scoreboard":"HKR","tm_id":1897,  "tm_name": "fc-hradec-kralove", "elo_api_name": "HradecKralove", "club_name": "FC Hradec Králové", "club_logo": "assets/logos/logo_hkr.png", "color":'#2C2C2A'},
     9: {"scoreboard":"KAR","tm_id":13726,"tm_name": "mfk-karvina", "elo_api_name": "Karvina", "club_name": "MFK Karviná", "club_logo": "assets/logos/logo_kar.png", "color":'#00903F'},
-    10: {"scoreboard":"CEB","tm_id":1321,"tm_name": "sk-dynamo-ceske-budejovice", "elo_api_name": "CeskeBudejovice", "club_name": "SK Dynamo České Budějovice", "club_logo": "assets/logos/logo_ceb.png", "color":'#1B1A16'},
+    10: {"scoreboard":"FCZ","tm_id":5545,"tm_name": "fc-fastav-zlin", "elo_api_name": "CeskeBudejovice", "club_name": "FC Zlín", "club_logo": "assets/logos/logo_fcz.png", "color":'#F1C71B'},
     11: {"scoreboard":"TEP","tm_id":814,"tm_name": "fk-teplice", "elo_api_name": "Teplice", "club_name": "FK Teplice", "club_logo": "assets/logos/logo_tep.png", "color":'#FFBF0A'},
     12: {"scoreboard":"LIB","tm_id":697,"tm_name": "fc-slovan-liberec", "elo_api_name": "SlovanLiberec", "club_name": "FC Slovan Liberec", "club_logo": "assets/logos/logo_lib.png", "color":'#5F9CF7'},
     13: {"scoreboard":"PLZ","tm_id":941,"tm_name": "fc-viktoria-pilsen", "elo_api_name": "ViktoriaPlzen", "club_name": "FC Viktoria Plzeň", "club_logo": "assets/logos/logo_plz.png", "color":'#035DA6'},

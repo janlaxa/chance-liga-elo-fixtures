@@ -24,6 +24,9 @@ from modules.get_expected_points import get_expected_points
 # Page config
 st.set_page_config(page_title="Czech Football Clubs ELO", layout="wide")
 
+# Set the PROJECT ROOT
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 def run_script():
     """Runs the data processing script at the scheduled time."""
     st.write("Stahování posledních výsledků...")
@@ -45,14 +48,14 @@ def start_scheduler():
 # Start the scheduler (runs in the background)
 start_scheduler()
 
-fixtures = pd.read_csv("data/processed/fixtures.csv")
+fixtures = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/fixtures.csv"))
 fixtures = fixtures[fixtures["is_planned_tf"]==True]
 fixtures["event_date"] = pd.to_datetime(fixtures["event_date"])
 today = datetime.datetime.today()
-club_elo = pd.read_csv("data/processed/club_elo.csv")
-league_table = pd.read_csv("data/processed/league_table.csv")
-home_league_table = pd.read_csv("data/processed/home_league_table.csv")
-away_league_table = pd.read_csv("data/processed/away_league_table.csv")
+club_elo = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/club_elo.csv"))
+league_table = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/league_table.csv"))
+home_league_table = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/home_league_table.csv"))
+away_league_table = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/away_league_table.csv"))
 
 # Streamlit filter for matchday range
 min_matchday = int(fixtures["matchday"].min())
@@ -101,7 +104,7 @@ fixtures = fixtures[
     (fixtures["matchday"] <= selected_matchday_range[1])
 ]
 
-club_average_opponent_elo = calculate_average_elo(selected_matchday_range[0], selected_matchday_range[1]).sort_values(by="position", ascending=True)
+club_average_opponent_elo = calculate_average_elo(selected_matchday_range[0], selected_matchday_range[1], PROJECT_ROOT=PROJECT_ROOT).sort_values(by="position", ascending=True)
 
 
 expected_points = get_expected_points(fixtures)
@@ -113,17 +116,23 @@ club_average_opponent_elo["total_away_points"] = np.round(club_average_opponent_
 club_average_opponent_elo = club_average_opponent_elo.sort_values(by="total_points", ascending=False).reset_index(drop=True)
 club_average_opponent_elo["expected_position"] = club_average_opponent_elo.index + 1
 club_average_opponent_elo["position_diff"] = club_average_opponent_elo["position"] - club_average_opponent_elo["expected_position"]
-club_average_opponent_elo["position_diff_str"] = club_average_opponent_elo["position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+club_average_opponent_elo["position_diff_str"] = club_average_opponent_elo["position_diff"].apply(
+    lambda x: f"({int(x):+d}) " if pd.notnull(x) and x != 0 else ""
+)
 
 club_average_opponent_elo = club_average_opponent_elo.sort_values(by="total_home_points", ascending=False).reset_index(drop=True)
 club_average_opponent_elo["expected_position_home"] = club_average_opponent_elo.index + 1
 club_average_opponent_elo["home_position_diff"] = club_average_opponent_elo["position_home"] - club_average_opponent_elo["expected_position_home"]
-club_average_opponent_elo["home_position_diff_str"] = club_average_opponent_elo["home_position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+club_average_opponent_elo["home_position_diff_str"] = club_average_opponent_elo["home_position_diff"].apply(
+    lambda x: f"({int(x):+d}) " if pd.notnull(x) and x != 0 else ""
+)
 
 club_average_opponent_elo = club_average_opponent_elo.sort_values(by="total_away_points", ascending=False).reset_index(drop=True)
 club_average_opponent_elo["expected_position_away"] = club_average_opponent_elo.index + 1
 club_average_opponent_elo["away_position_diff"] = club_average_opponent_elo["position_away"] - club_average_opponent_elo["expected_position_away"]
-club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo["away_position_diff"].apply(lambda x: f"({x:+d}) " if x != 0 else "")
+club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo["away_position_diff"].apply(
+    lambda x: f"({int(x):+d}) " if pd.notnull(x) and x != 0 else ""
+)
 
 
 st.title("Chance Liga")
@@ -182,7 +191,7 @@ with st.sidebar:
         club_logo = row["club_logo"]
         cols = st.columns([1, 2])  # Adjust the ratio as needed
         with cols[0]:
-            st.image(club_logo, width=30, output_format="auto")
+            st.image(os.path.join(PROJECT_ROOT, club_logo), width=30, output_format="auto")
         with cols[1]:
             if st.button(f"{scoreboard}", key=scoreboard):  # Unique key for each button
                 if club_id in st.session_state["selected_club_ids"]:
@@ -243,11 +252,11 @@ for idx, club_id in enumerate(st.session_state["selected_club_ids"]):
     fixtures_table.columns = ['Matchday','Datum','Domácí','Hosté','ELO Domácí', 'ELO Hosté']
     fixtures_table = fixtures_table.set_index("Matchday")
 
-    fig_elo_diff = get_elo_diff_bar_chart(filtered_fixtures)
-    fig_elo = get_elo_fixtures_bar_chart(filtered_fixtures)
+    fig_elo_diff = get_elo_diff_bar_chart(filtered_fixtures, PROJECT_ROOT=PROJECT_ROOT)
+    fig_elo = get_elo_fixtures_bar_chart(filtered_fixtures, PROJECT_ROOT=PROJECT_ROOT)
 
     with cols[idx]:
-        st.image(club_mapping[club_id]['club_logo'], width=50, output_format="auto")
+        st.image(os.path.join(PROJECT_ROOT, club_mapping[club_id]['club_logo']), width=50, output_format="auto")
         st.header(f"{club_mapping[club_id]['club_name']}")
         st.subheader(f'Očekávané body: {np.round(expected_points[expected_points["club_id"]==club_id]["total_expected_points"].iloc[0]).astype(int)}')
         st.plotly_chart(fig_elo)
@@ -296,7 +305,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig_ep.add_layout_image(
             dict(
-                source=Image.open(club_info["club_logo"]),
+                source=Image.open(os.path.join(PROJECT_ROOT, club_info["club_logo"])),
                 xref="paper", yref="y",
                 x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,
@@ -382,7 +391,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig_ep_home.add_layout_image(
             dict(
-                source=Image.open(club_info["club_logo"]),
+                source=Image.open(os.path.join(PROJECT_ROOT, club_info["club_logo"])),
                 xref="paper", yref="y",
                 x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,
@@ -468,7 +477,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig_ep_away.add_layout_image(
             dict(
-                source=Image.open(club_info["club_logo"]),
+                source=Image.open(os.path.join(PROJECT_ROOT, club_info["club_logo"])),
                 xref="paper", yref="y",
                 x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,
@@ -549,7 +558,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig1.add_layout_image(
             dict(
-                source=Image.open(club_info["club_logo"]),
+                source=Image.open(os.path.join(PROJECT_ROOT, club_info["club_logo"])),
                 xref="paper", yref="y",
                 x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,
@@ -621,11 +630,11 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig2.add_layout_image(
             dict(
-                source=Image.open(club_info["club_logo"]),
-                xref="paper", yref="y",
-                x=-0.01, y=row["club_name"],
-                sizex=0.05, sizey=0.9,
-                xanchor="right", yanchor="middle"
+            source=Image.open(os.path.join(PROJECT_ROOT, club_info["club_logo"])),
+            xref="paper", yref="y",
+            x=-0.01, y=row["club_name"],
+            sizex=0.05, sizey=0.9,
+            xanchor="right", yanchor="middle"
             )
         )
 
@@ -694,7 +703,7 @@ for idx, row in filtered_club_average_opponent_elo.iterrows():
     if club_info:
         fig3.add_layout_image(
             dict(
-                source=Image.open(club_info["club_logo"]),
+                source=Image.open(os.path.join(PROJECT_ROOT, club_info["club_logo"])),
                 xref="paper", yref="y",
                 x=-0.01, y=row["club_name"],
                 sizex=0.05, sizey=0.9,

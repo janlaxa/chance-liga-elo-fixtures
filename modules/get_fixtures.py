@@ -4,12 +4,13 @@ from bs4 import BeautifulSoup
 import re
 from datetime import datetime
 import numpy as np
+import os
 
 
-def get_fixtures(season, czech_clubs, club_mapping):
+def get_fixtures(season, czech_clubs, club_mapping, PROJECT_ROOT=None):
     home_field_advantage = 50
     fixtures = []
-    club_elo = pd.read_csv("data/processed/club_elo.csv")
+    club_elo = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/club_elo.csv"))
     for index, row in czech_clubs.iterrows():
         club_id = row["club_id"]
         tm_id = row["tm_id"]
@@ -51,6 +52,7 @@ def get_fixtures(season, czech_clubs, club_mapping):
     fixtures = pd.DataFrame(fixtures)
     fixtures.drop_duplicates(inplace=True)
     fixtures["event_date"] = pd.to_datetime(fixtures["event_date"].str[4:], format="%d.%m.%y").dt.strftime("%Y-%m-%d")
+    fixtures["event_time"] = fixtures["event_time"].replace("unbekannt", "00:00")
     fixtures["event_timestamp"] = pd.to_datetime(fixtures["event_date"] + " " + fixtures["event_time"], format="%Y-%m-%d %H:%M")
     tm_to_club = {entry["tm_name"]: entry["club_name"] for entry in club_mapping.values()}
     tm_to_index = {entry["tm_name"]: index for index, entry in club_mapping.items()}

@@ -1,22 +1,23 @@
 import pandas as pd
 from data.raw.club_mapping import club_mapping
 from modules.get_scoreboard_name import get_scoreboard_name
+import os
 
-def calculate_average_elo(min_matchday, max_matchday):
+def calculate_average_elo(min_matchday, max_matchday, PROJECT_ROOT=None):
     club_mapping_df = pd.DataFrame.from_dict(club_mapping, orient='index')
     club_mapping_df.index.name = 'club_id'  # Rename index to club_id
     club_mapping_df.reset_index(inplace=True)  # Make it a column
     
-    league_table = pd.read_csv("data/processed/league_table.csv")
-    home_league_table = pd.read_csv("data/processed/home_league_table.csv")
-    away_league_table = pd.read_csv("data/processed/away_league_table.csv")
-    fixtures = pd.read_csv("data/processed/fixtures.csv")
+    league_table = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/league_table.csv"))
+    home_league_table = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/home_league_table.csv"))
+    away_league_table = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/away_league_table.csv"))
+    fixtures = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/fixtures.csv"))
     fixtures = fixtures[
     (fixtures["matchday"] >= min_matchday) & 
     (fixtures["matchday"] <= max_matchday)
     ]
 
-    club_elo_df = pd.read_csv("data/processed/club_elo.csv")
+    club_elo_df = pd.read_csv(os.path.join(PROJECT_ROOT, "data/processed/club_elo.csv"))
     fixtures_clubs = {}
     club_average_opponent_elo = pd.DataFrame(columns=["club_id","club_name", "club_elo", "average_home_opponent_elo", "average_away_opponent_elo", "average_opponent_elo"])
 
