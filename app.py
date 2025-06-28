@@ -22,7 +22,7 @@ from modules.calculate_average_elo import calculate_average_elo
 from modules.get_expected_points import get_expected_points
 
 # Page config
-st.set_page_config(page_title="Czech Football Clubs ELO", layout="wide")
+st.set_page_config(page_title="Chance Liga 2025/26 Predikce - ELO Ratings", layout="wide")
 
 # Set the PROJECT ROOT
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
