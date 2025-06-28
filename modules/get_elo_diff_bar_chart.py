@@ -69,7 +69,8 @@ def get_elo_diff_bar_chart(filtered_fixtures, PROJECT_ROOT = None):
             type="linear"  # Ensure it's treated as a continuous scale
         ),
         yaxis=dict(
-            range=[-800,800]#[filtered_fixtures["elo_diff"].min() - 200, filtered_fixtures["elo_diff"].max() + 200]
+            range=[-800, 800],
+            dtick=100  # Set grid step to 100
         )
     )
     return fig_elo_diff
