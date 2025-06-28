@@ -8,6 +8,17 @@ from data.raw.club_mapping import club_mapping
 import os
 def get_elo_fixtures_bar_chart(filtered_fixtures, PROJECT_ROOT=None):
 
+    # Prepare subtitle if there are more than 10 fixtures
+    if len(filtered_fixtures) > 10:
+        subtitle = f"Zobrazeno příštích 10 utkání z {len(filtered_fixtures)}"
+    else:
+        subtitle = f""
+    # Sort fixtures by event_date descending and take the first 10 (most recent)
+    filtered_fixtures = filtered_fixtures.sort_values("event_date", ascending=False).head(10)
+    # Sort back by event_date ascending for correct plotting order
+    filtered_fixtures = filtered_fixtures.sort_values("event_date", ascending=True).reset_index(drop=True)
+
+
     club_name = club_mapping[filtered_fixtures["club_id"].iloc[0]]["club_name"]
     club_color = club_mapping[filtered_fixtures["club_id"].iloc[0]]["color"]
     scoreboard = club_mapping[filtered_fixtures["club_id"].iloc[0]]["scoreboard"]
@@ -45,7 +56,7 @@ def get_elo_fixtures_bar_chart(filtered_fixtures, PROJECT_ROOT=None):
             x=row.event_timestamp,
             y=0,
             yanchor="bottom",
-            text=f"{np.round((row.home_team_p_win if home_away == 'H' else row.away_team_p_win) * 100, 2)}%",
+            text=f"{np.round((row.home_team_p_win if home_away == 'H' else row.away_team_p_win) * 100, 1)}%",
             showarrow=False,
             font=dict(size=12, color="white" if row.elo_diff >=0 else "black")
         )
@@ -82,7 +93,9 @@ def get_elo_fixtures_bar_chart(filtered_fixtures, PROJECT_ROOT=None):
     # Update layout
     fig_elo_diff.update_traces(textposition="inside")
     fig_elo_diff.update_layout(
-        title="ELO soupeře a pravděpodobnost výhry",
+        title={
+            "text": f"ELO soupeře a pravděpodobnost výhry<br><span style='font-size:12px; font-weight:normal'>{subtitle}</span>",
+        },
         #xaxis_title="Fixture Date",
         #yaxis_title="Opponent ELO",
         xaxis=dict(

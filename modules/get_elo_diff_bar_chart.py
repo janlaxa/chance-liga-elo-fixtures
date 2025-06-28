@@ -6,7 +6,14 @@ from data.raw.club_mapping import club_mapping
 import os
 import pandas as pd
 def get_elo_diff_bar_chart(filtered_fixtures, PROJECT_ROOT = None):
-    
+    if len(filtered_fixtures) > 10:
+        subtitle = f"Zobrazeno příštích 10 utkání z {len(filtered_fixtures)}"
+    else:
+        subtitle = f""
+    # Sort fixtures by event_date descending and take the first 10 (most recent)
+    filtered_fixtures = filtered_fixtures.sort_values("event_date", ascending=False).head(10)
+    # Sort back by event_date ascending for correct plotting order
+    filtered_fixtures = filtered_fixtures.sort_values("event_date", ascending=True).reset_index(drop=True)
     fig_elo_diff = go.Figure()
     club_color = club_mapping[filtered_fixtures["club_id"].max()]["color"]
     # Add bars for ELO difference
@@ -50,7 +57,9 @@ def get_elo_diff_bar_chart(filtered_fixtures, PROJECT_ROOT = None):
     # Update layout
     fig_elo_diff.update_traces(textposition="inside")
     fig_elo_diff.update_layout(
-        title="Meziklubový ELO rozdíl",
+        title={
+            "text": f"Meziklubový ELO rozdíl<br><span style='font-size:12px; font-weight:normal'>{subtitle}</span>",
+        },
         #xaxis_title="Fixture Date",
         #yaxis_title="Elo Difference",
         xaxis=dict(
