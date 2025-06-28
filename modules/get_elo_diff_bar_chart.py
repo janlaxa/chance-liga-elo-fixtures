@@ -70,7 +70,7 @@ def get_elo_diff_bar_chart(filtered_fixtures, PROJECT_ROOT = None):
         ),
         yaxis=dict(
             range=[-800, 800],
-            dtick=100  # Set grid step to 100
+            dtick=200  # Set grid step to 100
         )
     )
     return fig_elo_diff
