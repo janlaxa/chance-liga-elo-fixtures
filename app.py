@@ -166,9 +166,9 @@ st.markdown("""
 <style>
     /* Change expander background and label color */
     .stExpander {
-        background-color: #AEFF00 !important;
+        background-color: #FFFFFF !important;
         border-radius: 8px !important;
-        border: 1px solid #577F00 !important;
+        border: 2px solid #AEFF00 !important;
     }
     .stExpander > summary {
         color: #111A67 !important;
@@ -178,7 +178,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-with st.expander("ℹ️ Dokumentace", expanded=True):
+with st.expander("ℹ️ Dokumentace (klikněte pro skrytí)", expanded=True):
     st.markdown("""
     ⚽️ **Tato aplikace slouží k vizualizaci a analýze losu týmů v Chance lize na základě ELO ratingů.**
     
@@ -189,6 +189,30 @@ with st.expander("ℹ️ Dokumentace", expanded=True):
     - 🎚️ Interaktivně měnit rozsah kol, pro která se výpočty provádějí.
     - 📅 Pro každý klub zobrazit detailní tabulku zápasů, grafy a očekávané body.
     """)
+
+    st.markdown("### 🧮 Co je ELO rating?")
+
+    st.markdown(
+        "ELO rating je číselný systém pro hodnocení síly týmů nebo hráčů na základě jejich výsledků. "
+        "Původně byl vyvinut pro šachy ♟️, ale dnes se používá i ve fotbale ⚽️."
+    )
+    st.markdown(
+        "- Každý tým má své ELO skóre.\n"
+        "- Po každém zápase se skóre upraví podle očekávaného výsledku a skutečného výsledku.\n"
+        "- Pokud slabší tým porazí silnější, získá více bodů, než kdyby vyhrál favorit. 🚀"
+        "ELO tak umožňuje objektivně porovnávat sílu týmů na základě jejich výkonů. 📊"
+    )
+
+    st.markdown("#### 📐 Výpočet očekávaného výsledku zápasu")
+    st.markdown("Pravděpodobnost výhry domácího týmu:")
+    st.latex(r"E_H = \frac{1}{1 + 10^{(R_B - R_A + A_{H})/400}}")
+    st.markdown("Pravděpodobnost výhry venkovního týmu:")
+    st.latex(r"E_A = \frac{1}{1 + 10^{(R_A - R_H + A_{H})/400}}")
+    st.markdown("Pravděpodobnost remízy:")
+    st.latex(r"E_D = 1 - (E_H + E_A)")
+
+    # Streamlit does not support inline LaTeX in markdown, only block-level formulas via st.latex.
+    st.markdown("kde $R_H$ je ELO rating domácího týmu, $R_A$ je ELO rating soupeře, $A_H$ je domácí výhoda.")
 
 # Initialize session state for selected club
 if "selected_club_ids" not in st.session_state:
