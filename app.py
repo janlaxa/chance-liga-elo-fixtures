@@ -63,14 +63,40 @@ max_matchday = int(fixtures["matchday"].max())
 
 import matplotlib.pyplot as plt
 
+
+
+selected_matchday_range = st.sidebar.slider(
+    "Výběr ligových kol pro výpočet",
+    min_value=min_matchday,
+    max_value=max_matchday,
+    value=(min_matchday, max_matchday),
+    key="matchday_slider"
+)
+
 # Add histogram to the slider
-matchday_counts = fixtures["matchday"].value_counts().sort_index()
+# Filter matchday_counts based on selected matchday range
+filtered_fixtures_hist = fixtures[
+    (fixtures["matchday"] >= selected_matchday_range[0]) & 
+    (fixtures["matchday"] <= selected_matchday_range[1])
+]
+matchday_counts = filtered_fixtures_hist["matchday"].value_counts().sort_index()
 
 fig, ax = plt.subplots(figsize=(10, 4))
 ax.bar(matchday_counts.index, matchday_counts.values, color='#111A67')
 ax.set_xlabel('')
 ax.set_ylabel('')
 ax.set_xticks(matchday_counts.index)
+
+# Hide some x-tick labels to avoid overlap
+xtick_labels = []
+skip = max(1, len(matchday_counts) // 10)  # Show at most 10 labels
+for i, val in enumerate(matchday_counts.index):
+    if i % skip == 0 or i == len(matchday_counts.index) - 1:
+        xtick_labels.append(str(val))
+    else:
+        xtick_labels.append("")
+ax.set_xticklabels(xtick_labels)
+
 ax.set_yticks([])
 
 # Increase x-axis label size
@@ -88,21 +114,18 @@ ax.tick_params(axis='y', which='both', left=False, right=False)
 fig.patch.set_alpha(0.0)
 ax.patch.set_alpha(0.0)
 
+st.sidebar.markdown("Histogram budoucích zápasů dle kola")
+
 st.sidebar.pyplot(fig)
 
 
-selected_matchday_range = st.sidebar.slider(
-    "Select Matchday Range",
-    min_value=min_matchday,
-    max_value=max_matchday,
-    value=(min_matchday, max_matchday),
-    key="matchday_slider"
-)
 # Filter fixtures based on selected matchday range
 fixtures = fixtures[
     (fixtures["matchday"] >= selected_matchday_range[0]) & 
     (fixtures["matchday"] <= selected_matchday_range[1])
 ]
+
+
 
 club_average_opponent_elo = calculate_average_elo(selected_matchday_range[0], selected_matchday_range[1], PROJECT_ROOT=PROJECT_ROOT).sort_values(by="position", ascending=True)
 
@@ -135,8 +158,37 @@ club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo[
 )
 
 
-st.title("Chance Liga")
+st.title("Chance Liga 2025/2026")
 st.subheader("Kdo má nejtěžší los?")
+
+# Custom CSS for expander color
+st.markdown("""
+<style>
+    /* Change expander background and label color */
+    .stExpander {
+        background-color: #AEFF00 !important;
+        border-radius: 8px !important;
+        border: 1px solid #577F00 !important;
+    }
+    .stExpander > summary {
+        color: #111A67 !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+with st.expander("ℹ️ Dokumentace", expanded=True):
+    st.markdown("""
+    ⚽️ **Tato aplikace slouží k vizualizaci a analýze losu týmů v Chance lize na základě ELO ratingů.**
+    
+    Umožňuje:
+    - 📊 Porovnat obtížnost losu jednotlivých klubů podle průměrného ELO soupeřů v daném rozmezí kol.
+    - 🏆 Zobrazit očekávaný počet bodů, které by kluby měly získat do konce základní části, včetně rozdělení na domácí a venkovní zápasy.
+    - 🔍 Filtrovat a porovnávat maximálně tři kluby najednou a zobrazit jejich nadcházející zápasy včetně detailních grafů ELO rozdílů.
+    - 🎚️ Interaktivně měnit rozsah kol, pro která se výpočty provádějí.
+    - 📅 Pro každý klub zobrazit detailní tabulku zápasů, grafy a očekávané body.
+    """)
 
 # Initialize session state for selected club
 if "selected_club_ids" not in st.session_state:
@@ -172,6 +224,9 @@ st.markdown("""
     .st-emotion-cache-1dj3ksd {
         background-color:#111A67
     }
+    .st-emotion-cache-89jlt8 {
+        color:#111A67;
+    }       
     .st-ar {
         background:#111A67;
     }
@@ -196,7 +251,7 @@ with st.sidebar:
             if st.button(f"{scoreboard}", key=scoreboard):  # Unique key for each button
                 if club_id in st.session_state["selected_club_ids"]:
                     st.session_state["selected_club_ids"].remove(club_id)
-                elif len(st.session_state["selected_club_ids"]) < 4:
+                elif len(st.session_state["selected_club_ids"]) < 3:
                     st.session_state["selected_club_ids"].append(club_id)
                 else:
                     st.error("Maximální počet klubů pro srovnání dosažen")
