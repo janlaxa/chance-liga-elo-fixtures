@@ -221,44 +221,84 @@ if "selected_club_ids" not in st.session_state:
 
 st.markdown("""
 <style>
+    /* Sidebar background for light mode */
     [data-testid=stSidebar] {
         background-color: #AEFF00;
     }
+
+    /* Buttons in light mode */
     .stButton button {
         background-color: white;
         font-weight: bold;
         color: #577F00;
         border: 1px solid #577F00;
     }
-
     .stButton button:hover {
-        background-color:#AEFF00;
+        background-color: #AEFF00;
         color: #577F00;
         border: 1px solid #577F00;
     }
-    .stButton>button:focus {
-        background-color:white !important;
+    .stButton > button:focus {
+        background-color: white !important;
         color: #577F00 !important;
         border: 1px solid #577F00 !important;
     }
+
+    /* Text colors for light mode */
     .st-emotion-cache-1373cj4 {
-        color:#111A67;
-        
-    }
-    .st-emotion-cache-1dj3ksd {
-        background-color:#111A67
+        color: #111A67;
     }
     .st-emotion-cache-89jlt8 {
-        color:#111A67;
-    }       
+        color: #111A67;
+    }
     .st-ar {
-        background:#111A67;
+        background: #111A67;
     }
     .st-ae {
-        color:#111A67;
+        color: #111A67;
+    }
+
+    /* Background for a specific class in light mode */
+    .st-emotion-cache-1dj3ksd {
+        background-color: #111A67;
+    }
+
+
+    /* === Dark mode overrides === */
+    body.dark [data-testid=stSidebar] {
+        background-color: #4a5a00;  /* darker green for sidebar in dark mode */
+    }
+
+    body.dark .stButton button {
+        background-color: #222;   /* dark button background */
+        font-weight: bold;
+        color: #a5d300;           /* brighter green text */
+        border: 1px solid #a5d300;
+    }
+    body.dark .stButton button:hover {
+        background-color: #9ecf00; /* bright green on hover */
+        color: #222;
+        border: 1px solid #9ecf00;
+    }
+    body.dark .stButton > button:focus {
+        background-color: #222 !important;
+        color: #a5d300 !important;
+        border: 1px solid #a5d300 !important;
+    }
+
+    body.dark .st-emotion-cache-1373cj4,
+    body.dark .st-emotion-cache-89jlt8,
+    body.dark .st-ae {
+        color: #cde066;  /* lighter text color for dark mode */
+    }
+
+    body.dark .st-emotion-cache-1dj3ksd,
+    body.dark .st-ar {
+        background-color: #222;   /* dark background in dark mode */
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 with st.sidebar:
