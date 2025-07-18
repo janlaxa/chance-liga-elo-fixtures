@@ -24,6 +24,7 @@ from modules.get_expected_points import get_expected_points
 # Page config
 st.set_page_config(page_title="Chance Liga 2025/26 Predikce - ELO Ratings", layout="wide")
 
+
 # Set the PROJECT ROOT
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -160,12 +161,27 @@ club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo[
 # Put the title and subheader at the top to left column of 2
 
 
+import base64
+
+def get_base64(file_path):
+    with open(file_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+img_base64 = get_base64("assets/logo_black_copy.png")  # Your local image path
 
 import streamlit.components.v1 as components
 
 cols = st.columns([1, 1])
 
 with cols[0]:
+    st.markdown(
+        f'''
+        <a href="https://www.laxa.cz/" target="_blank">
+            <img src="data:image/png;base64,{img_base64}" alt="Jan Laxa: Osobní web" style="width: 80px;" />
+        </a>
+        ''',
+        unsafe_allow_html=True
+    )
     st.title("Chance Liga 2025/2026")
     st.subheader("Jaký klub má v základní části nejtěžší los?")
 
@@ -177,8 +193,7 @@ with cols[1]:
             height: 100%;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 16px;
+            align-items: flex-start;
         ">
             <div style="
                 width: 100%;
