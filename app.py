@@ -157,9 +157,58 @@ club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo[
     lambda x: f"({int(x):+d}) " if pd.notnull(x) and x != 0 else ""
 )
 
+# Put the title and subheader at the top to left column of 2
 
-st.title("Chance Liga 2025/2026")
-st.subheader("Jaký klub má v základní části nejtěžší los?")
+
+
+import streamlit.components.v1 as components
+
+cols = st.columns([1, 1])
+
+with cols[0]:
+    st.title("Chance Liga 2025/2026")
+    st.subheader("Jaký klub má v základní části nejtěžší los?")
+
+with cols[1]:
+    components.html(
+        '''
+        <div style="
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        ">
+            <div style="
+                width: 100%;
+                height: 370px;
+                background-color: #FAFAFA;
+                border-radius: 12px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                overflow: hidden;
+                padding: 16px;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            ">
+            <div style="margin-bottom: 8px; font-family: sans-serif; font-size: 16px; text-align: center; color: #111A67;">
+                    📬 Zajímají vás témata o <strong>sportovní ekonomii</strong> a <strong>analytice</strong>? Přihlaste se na Škváru 👇
+                </div>
+                <iframe 
+                    src="https://newsletter.skvara.org/embed" 
+                    width="100%" 
+                    height="100%" 
+                    style="border: none;" 
+                    frameborder="0" 
+                    scrolling="no">
+                </iframe>
+            </div>
+        </div>
+        ''',
+        height=390
+    )
 
 # Custom CSS for expander color
 st.markdown("""
