@@ -81,7 +81,7 @@ filtered_fixtures_hist = fixtures[
 ]
 matchday_counts = filtered_fixtures_hist["matchday"].value_counts().sort_index()
 
-fig, ax = plt.subplots(figsize=(10, 4))
+fig, ax = plt.subplots(figsize=(10, 2))
 ax.bar(matchday_counts.index, matchday_counts.values, color='#111A67')
 ax.set_xlabel('')
 ax.set_ylabel('')
@@ -159,7 +159,7 @@ club_average_opponent_elo["away_position_diff_str"] = club_average_opponent_elo[
 
 
 st.title("Chance Liga 2025/2026")
-st.subheader("Kdo má nejtěžší los?")
+st.subheader("Jaký klub má v základní části nejtěžší los?")
 
 # Custom CSS for expander color
 st.markdown("""
@@ -178,7 +178,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-with st.expander("ℹ️ Dokumentace (klikněte pro skrytí)", expanded=True):
+with st.expander("**Dokumentace (klikněte pro skrytí)**", expanded=True, icon="ℹ️", ):
     st.markdown("""
     ⚽️ **Tato aplikace slouží k vizualizaci a analýze losu týmů v Chance lize na základě ELO ratingů.**
     
@@ -228,7 +228,7 @@ st.markdown("""
 
     /* Buttons in light mode */
     .stButton button {
-        background-color: white;
+        background-color: #FAFAFA;
         font-weight: bold;
         color: #577F00;
         border: 1px solid #577F00;
@@ -239,7 +239,7 @@ st.markdown("""
         border: 1px solid #577F00;
     }
     .stButton > button:focus {
-        background-color: white !important;
+        background-color: #FAFAFA !important;
         color: #577F00 !important;
         border: 1px solid #577F00 !important;
     }
@@ -378,9 +378,10 @@ for idx, club_id in enumerate(st.session_state["selected_club_ids"]):
         st.image(os.path.join(PROJECT_ROOT, club_mapping[club_id]['club_logo']), width=50, output_format="auto")
         st.header(f"{club_mapping[club_id]['club_name']}")
         st.subheader(f'Očekávané body: {np.round(expected_points[expected_points["club_id"]==club_id]["total_expected_points"].iloc[0]).astype(int)}')
+        st.markdown(f"**za {selected_matchday_range[0]}. - {selected_matchday_range[1]}. kolo**" if selected_matchday_range[0] != selected_matchday_range[1] else f"**za {selected_matchday_range[0]}. kolo**")
         st.plotly_chart(fig_elo)
         st.plotly_chart(fig_elo_diff)
-        st.dataframe(fixtures_table, use_container_width=True)
+        st.dataframe(fixtures_table.sort_values(by='Matchday'), use_container_width=True)
 
 st.divider()
 
