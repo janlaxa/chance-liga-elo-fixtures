@@ -67,7 +67,7 @@ import matplotlib.pyplot as plt
 
 
 selected_matchday_range = st.sidebar.slider(
-    "Výběr ligových kol pro výpočet",
+    "Výběr budoucích ligových kol pro výpočet",
     min_value=min_matchday,
     max_value=max_matchday,
     value=(min_matchday, max_matchday),
